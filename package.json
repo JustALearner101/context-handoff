@@ -1,6 +1,6 @@
 {
   "name": "context-handoff",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Universal AI session handoff skill — export context from one AI coding tool and resume in another",
   "bin": {
     "context-handoff": "./bin/cli.js"
