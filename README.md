@@ -85,6 +85,18 @@ No server. No account. No internet. Just a Markdown file.
 5. Update this README
 6. Open a PR with a demo screenshot
 
+## Releases (GitHub Actions)
+
+This repo ships with a GitHub Actions workflow that will, on pushing a tag like `v1.0.7`:
+
+- run tests
+- publish to npm
+- create a GitHub Release
+
+Setup:
+- Add a repository secret `NPM_TOKEN` (an npm automation token with publish access for `context-handoff`).
+- Push a version tag: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+
 ## License
 
 MIT
