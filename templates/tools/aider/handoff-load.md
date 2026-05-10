@@ -1,4 +1,4 @@
-Read the file `handoff.md` from the project root.
+/ask Read the file `handoff.md` from the project root.
 
 This is a session handoff from another AI coding tool.
 The previous AI exported its full session context into this file.

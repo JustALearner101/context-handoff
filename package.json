@@ -25,17 +25,17 @@
     "llm",
     "developer-tools"
   ],
-  "author": "your-github-username",
+  "author": "JustALearner101",
   "license": "MIT",
   "engines": {
     "node": ">=16.0.0"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/your-github-username/context-handoff.git"
+    "url": "git+https://github.com/JustALearner101/context-handoff.git"
   },
   "bugs": {
-    "url": "https://github.com/your-github-username/context-handoff/issues"
+    "url": "https://github.com/JustALearner101/context-handoff/issues"
   },
-  "homepage": "https://github.com/your-github-username/context-handoff#readme"
+  "homepage": "https://github.com/JustALearner101/context-handoff#readme"
 }

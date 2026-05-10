@@ -1,11 +1,11 @@
-Generate a structured handoff document and save it as `handoff.md` in the project root.
+/ask Generate a structured handoff document and save it as `handoff.md` in the project root.
 Follow this schema EXACTLY — do not skip any section:
 
 # 🤝 Context Handoff
 
 ## Meta
 - **exported_at**: [current ISO 8601 timestamp]
-- **exported_from**: opencode
+- **exported_from**: aider
 - **session_id**: [generate a short random ID, e.g. a8f3c1]
 
 ## Project

@@ -143,10 +143,19 @@ function installCodex(cwd) {
 
 function installAider(cwd) {
   hd("Installing for Aider");
-  const aiderConf = path.join(cwd, ".aider.conf.yml");
-  const snippet   = readTemplate("tools/aider/aider_snippet.yml");
-  appendFile(aiderConf, snippet, "context-handoff aliases", "context-handoff aliases");
+  const dir = path.join(cwd, ".aider", "commands");
+  writeFile(
+    path.join(dir, "handoff-export"),
+    readTemplate("tools/aider/handoff-export.md"),
+    "handoff-export command"
+  );
+  writeFile(
+    path.join(dir, "handoff-load"),
+    readTemplate("tools/aider/handoff-load.md"),
+    "handoff-load command"
+  );
   inf("Use with: /handoff-export  and  /handoff-load");
+  inf("Requires Aider v0.50.0+ for /commands support");
 }
 
 function installCursor(cwd) {
@@ -171,6 +180,7 @@ ${c.bold}Usage:${c.reset}
   npx context-handoff --tool <name>   Install for a specific tool
   npx context-handoff --all           Install for all supported tools
   npx context-handoff --list          List supported tools
+  npx context-handoff --version       Show version
   npx context-handoff --help          Show this help
 
 ${c.bold}Supported tools:${c.reset}
@@ -192,6 +202,11 @@ function main() {
 
   if (args.length === 0 || args.includes("--help") || args.includes("-h")) {
     printHelp();
+    process.exit(0);
+  }
+
+  if (args.includes("--version") || args.includes("-v")) {
+    console.log(VERSION);
     process.exit(0);
   }
 

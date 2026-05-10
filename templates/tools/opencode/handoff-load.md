@@ -1,21 +1,29 @@
----
-name: handoff-load
-description: Load session context from handoff.md exported by another AI coding tool
----
+Read the file `handoff.md` from the project root.
 
-Read `handoff.md` from the project root.
+This is a session handoff from another AI coding tool.
+The previous AI exported its full session context into this file.
 
-If it doesn't exist: "❌ No handoff.md found. Ask the previous AI to run /handoff-export first."
+Your job:
 
-If it exists:
-1. Read the file completely
-2. Read every file listed under Active Files (silently)
-3. Confirm with:
+1. Read handoff.md completely.
+
+2. Read every file listed under "Active Files" in handoff.md.
+   Do this silently — do not narrate each file read.
+
+3. Respond with a brief confirmation:
+
    ✅ Context loaded from [exported_from] session [session_id]
-   Project: [name] — [stack]
-   Task: [current task]
-   Blocker: [blocker or None]
-   I'll start with: [Next Steps item 1]
-4. Begin working on Next Steps item 1 immediately
-5. Follow "For the Next AI" instructions exactly
-6. Do NOT change Key Decisions without flagging first
+
+   **Project**: [name] — [stack]
+   **Task**: [current task, one line]
+   **Blocker**: [blocker or "None"]
+   **I'll start with**: [Next Steps item #1]
+
+4. Then immediately begin working on Next Steps item #1.
+
+Rules:
+- Do NOT ask for clarification before reading the files.
+- Do NOT change anything listed as a Key Decision without flagging it first.
+- Do NOT refactor code outside the scope of the current task.
+- Follow "For the Next AI" instructions exactly.
+- If handoff.md does not exist: "❌ No handoff.md found. Ask the previous AI to run /handoff-export first."
