@@ -57,9 +57,16 @@ The `handoff.md` file captures everything the next AI needs:
 ```bash
 npx context-handoff --tool <name>   # Install for specific tool
 npx context-handoff --all           # Install for all tools
+npx context-handoff --validate      # Validate handoff.md schema/content
 npx context-handoff --list          # List supported tools
+npx context-handoff --dry-run       # Preview file changes (no writes)
+npx context-handoff --force         # Allow overwriting/appending where applicable
 npx context-handoff --help          # Help
 ```
+
+Notes:
+- By default, the installer will not overwrite existing files. Use `--force` to overwrite.
+- Use `--dry-run` to see what would change without modifying files.
 
 ## How It Works
 

@@ -112,9 +112,40 @@ test('Validator', async (t) => {
   await t.test('validateHandoff succeeds if all sections present', () => {
     const filePath = path.join(tmpDir, 'handoff.md');
     const content = [
-      "## Meta", "## Project", "## Current Task", "## Progress",
-      "## Active Files", "## Blocker", "## Key Decisions",
-      "## Environment", "## Next Steps", "## For the Next AI"
+      "## Meta",
+      "- **exported_at**: 2026-05-10T13:45:00Z",
+      "- **exported_from**: gemini-cli",
+      "- **session_id**: b9e4d2",
+      "",
+      "## Project",
+      "- **name**: context-handoff",
+      "- **stack**: Node.js",
+      "- **root**: " + tmpDir,
+      "- **package_manager**: npm",
+      "",
+      "## Current Task",
+      "Do something.",
+      "",
+      "## Progress",
+      "- [x] Done",
+      "",
+      "## Active Files",
+      "- bin/cli.js — Main CLI entrypoint",
+      "",
+      "## Blocker",
+      "None",
+      "",
+      "## Key Decisions",
+      "- Decision",
+      "",
+      "## Environment",
+      "- Node.js: v24",
+      "",
+      "## Next Steps",
+      "1. Do next thing",
+      "",
+      "## For the Next AI",
+      "- Read all Active Files",
     ].join('\n');
     fs.writeFileSync(filePath, content, 'utf8');
     
@@ -125,6 +156,156 @@ test('Validator', async (t) => {
     validateHandoff(tmpDir);
     
     assert.strictEqual(exitCode, null); // No exit called
+    process.exit = originalExit;
+  });
+
+  await t.test('validateHandoff fails if Meta exported_at is not ISO', () => {
+    const filePath = path.join(tmpDir, 'handoff.md');
+    const content = [
+      "## Meta",
+      "- **exported_at**: not-a-date",
+      "- **exported_from**: gemini-cli",
+      "- **session_id**: b9e4d2",
+      "",
+      "## Project",
+      "- **name**: context-handoff",
+      "- **stack**: Node.js",
+      "- **root**: " + tmpDir,
+      "- **package_manager**: npm",
+      "",
+      "## Current Task",
+      "Do something.",
+      "",
+      "## Progress",
+      "- [x] Done",
+      "",
+      "## Active Files",
+      "- bin/cli.js — Main CLI entrypoint",
+      "",
+      "## Blocker",
+      "None",
+      "",
+      "## Key Decisions",
+      "- Decision",
+      "",
+      "## Environment",
+      "- Node.js: v24",
+      "",
+      "## Next Steps",
+      "1. Do next thing",
+      "",
+      "## For the Next AI",
+      "- Read all Active Files",
+    ].join('\n');
+    fs.writeFileSync(filePath, content, 'utf8');
+
+    const originalExit = process.exit;
+    let exitCode = null;
+    process.exit = (code) => { exitCode = code; };
+
+    validateHandoff(tmpDir);
+
+    assert.strictEqual(exitCode, 1);
+    process.exit = originalExit;
+  });
+
+  await t.test('validateHandoff fails if Active Files lacks em dash separator', () => {
+    const filePath = path.join(tmpDir, 'handoff.md');
+    const content = [
+      "## Meta",
+      "- **exported_at**: 2026-05-10T13:45:00Z",
+      "- **exported_from**: gemini-cli",
+      "- **session_id**: b9e4d2",
+      "",
+      "## Project",
+      "- **name**: context-handoff",
+      "- **stack**: Node.js",
+      "- **root**: " + tmpDir,
+      "- **package_manager**: npm",
+      "",
+      "## Current Task",
+      "Do something.",
+      "",
+      "## Progress",
+      "- [x] Done",
+      "",
+      "## Active Files",
+      "- bin/cli.js (missing separator)",
+      "",
+      "## Blocker",
+      "None",
+      "",
+      "## Key Decisions",
+      "- Decision",
+      "",
+      "## Environment",
+      "- Node.js: v24",
+      "",
+      "## Next Steps",
+      "1. Do next thing",
+      "",
+      "## For the Next AI",
+      "- Read all Active Files",
+    ].join('\n');
+    fs.writeFileSync(filePath, content, 'utf8');
+
+    const originalExit = process.exit;
+    let exitCode = null;
+    process.exit = (code) => { exitCode = code; };
+
+    validateHandoff(tmpDir);
+
+    assert.strictEqual(exitCode, 1);
+    process.exit = originalExit;
+  });
+
+  await t.test('validateHandoff fails if Next Steps does not start with 1.', () => {
+    const filePath = path.join(tmpDir, 'handoff.md');
+    const content = [
+      "## Meta",
+      "- **exported_at**: 2026-05-10T13:45:00Z",
+      "- **exported_from**: gemini-cli",
+      "- **session_id**: b9e4d2",
+      "",
+      "## Project",
+      "- **name**: context-handoff",
+      "- **stack**: Node.js",
+      "- **root**: " + tmpDir,
+      "- **package_manager**: npm",
+      "",
+      "## Current Task",
+      "Do something.",
+      "",
+      "## Progress",
+      "- [x] Done",
+      "",
+      "## Active Files",
+      "- bin/cli.js — Main CLI entrypoint",
+      "",
+      "## Blocker",
+      "None",
+      "",
+      "## Key Decisions",
+      "- Decision",
+      "",
+      "## Environment",
+      "- Node.js: v24",
+      "",
+      "## Next Steps",
+      "2. Wrong start",
+      "",
+      "## For the Next AI",
+      "- Read all Active Files",
+    ].join('\n');
+    fs.writeFileSync(filePath, content, 'utf8');
+
+    const originalExit = process.exit;
+    let exitCode = null;
+    process.exit = (code) => { exitCode = code; };
+
+    validateHandoff(tmpDir);
+
+    assert.strictEqual(exitCode, 1);
     process.exit = originalExit;
   });
 

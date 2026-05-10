@@ -4,7 +4,7 @@ const fs   = require("fs");
 const path = require("path");
 
 // ── constants ────────────────────────────────────────────────────
-const VERSION = "1.0.0";
+const VERSION = require(path.join(__dirname, "..", "package.json")).version;
 const TEMPLATES_DIR = path.join(__dirname, "..", "templates");
 
 let DRY_RUN = false;
@@ -79,6 +79,121 @@ function validateHandoff(cwd) {
   if (missing.length > 0) {
     err("handoff.md is missing required sections:");
     missing.forEach(m => console.log(`  ${c.red}•${c.reset} ${m}`));
+    process.exit(1);
+    return;
+  }
+
+  // Content validation: keep it strict enough for downstream tools to parse.
+  const lines = content.split(/\r?\n/);
+  const findSectionRange = (header) => {
+    const startIdx = lines.findIndex(l => l.trim() === header);
+    if (startIdx === -1) return null;
+    let endIdx = lines.length;
+    for (let i = startIdx + 1; i < lines.length; i++) {
+      if (lines[i].trim().startsWith("## ")) {
+        endIdx = i;
+        break;
+      }
+    }
+    return { startIdx, endIdx };
+  };
+
+  const sectionLines = (header) => {
+    const r = findSectionRange(header);
+    if (!r) return [];
+    return lines.slice(r.startIdx + 1, r.endIdx);
+  };
+
+  const failures = [];
+  const requireNonEmptySection = (header, label) => {
+    const body = sectionLines(header).join("\n").trim();
+    if (!body) failures.push(`${label} section is empty`);
+    return body;
+  };
+
+  const metaBody = requireNonEmptySection("## Meta", "Meta");
+  const projectBody = requireNonEmptySection("## Project", "Project");
+  requireNonEmptySection("## Current Task", "Current Task");
+  requireNonEmptySection("## Progress", "Progress");
+  const activeFilesBody = requireNonEmptySection("## Active Files", "Active Files");
+  const blockerBody = requireNonEmptySection("## Blocker", "Blocker");
+  requireNonEmptySection("## Next Steps", "Next Steps");
+  requireNonEmptySection("## For the Next AI", "For the Next AI");
+
+  const parseBoldKeyValueBullets = (body, expectedKeys, sectionName) => {
+    const kv = {};
+    const re = /^-\s+\*\*(.+?)\*\*:\s*(.*)\s*$/gm;
+    let m;
+    while ((m = re.exec(body)) !== null) {
+      kv[m[1]] = m[2];
+    }
+    expectedKeys.forEach((k) => {
+      if (!kv.hasOwnProperty(k) || !String(kv[k] || "").trim()) {
+        failures.push(`${sectionName} is missing a non-empty "${k}" entry`);
+      }
+    });
+    return kv;
+  };
+
+  // Meta: require keys + basic format checks.
+  const meta = parseBoldKeyValueBullets(metaBody, ["exported_at", "exported_from", "session_id"], "Meta");
+  if (meta.exported_at) {
+    const iso = String(meta.exported_at).trim();
+    const isoRe = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/;
+    if (!isoRe.test(iso) || Number.isNaN(Date.parse(iso))) {
+      failures.push('Meta "exported_at" must be a valid ISO 8601 timestamp (e.g. 2026-05-10T13:45:00Z)');
+    }
+  }
+  if (meta.exported_from) {
+    const from = String(meta.exported_from).trim();
+    if (/^\[.*\]$/.test(from)) {
+      failures.push('Meta "exported_from" must be a concrete tool name, not a placeholder');
+    }
+  }
+  if (meta.session_id) {
+    const sid = String(meta.session_id).trim();
+    if (!/^[a-z0-9]{4,12}$/i.test(sid) || /^\[.*\]$/.test(sid)) {
+      failures.push('Meta "session_id" must be a short alphanumeric id (4-12 chars), not a placeholder');
+    }
+  }
+
+  // Project: require keys + root should look like an absolute path.
+  const project = parseBoldKeyValueBullets(projectBody, ["name", "stack", "root", "package_manager"], "Project");
+  if (project.root) {
+    const root = String(project.root).trim();
+    if (!path.isAbsolute(root) || /^\[.*\]$/.test(root)) {
+      failures.push('Project "root" must be an absolute path');
+    }
+  }
+
+  // Active Files: require at least one "- path — desc" style entry.
+  if (activeFilesBody) {
+    const activeLines = activeFilesBody.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const entries = activeLines.filter(l => l.startsWith("- "));
+    if (entries.length === 0) {
+      failures.push("Active Files must contain at least one bullet entry");
+    } else {
+      const bad = entries.filter(l => !l.includes(" — ") || l === "-" || l === "-");
+      if (bad.length > 0) {
+        failures.push('Active Files entries must use: "- path — one-line description"');
+      }
+    }
+  }
+
+  // Blocker: allow "None" or a concrete error, but avoid placeholders.
+  if (blockerBody && /^\[.*\]$/.test(blockerBody.trim())) {
+    failures.push("Blocker must be \"None\" or a concrete description, not a placeholder");
+  }
+
+  // Next Steps: must include a numbered list starting with "1.".
+  const nextStepsLines = sectionLines("## Next Steps").map(l => l.trim()).filter(Boolean);
+  if (!nextStepsLines.some(l => /^1\./.test(l))) {
+    failures.push('Next Steps must include a numbered list starting with "1."');
+  }
+
+  if (failures.length > 0) {
+    err("handoff.md failed validation:");
+    failures.forEach(f => console.log(`  ${c.red}•${c.reset} ${f}`));
     process.exit(1);
     return;
   }
