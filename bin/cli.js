@@ -7,6 +7,9 @@ const path = require("path");
 const VERSION = "1.0.0";
 const TEMPLATES_DIR = path.join(__dirname, "..", "templates");
 
+let DRY_RUN = false;
+let FORCE = false;
+
 const TOOLS = {
   "claude-code": installClaudeCode,
   "gemini-cli":  installGeminiCli,
@@ -42,29 +45,82 @@ function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
 }
 
+function validateHandoff(cwd) {
+  const filePath = path.join(cwd, "handoff.md");
+  hd("Validating handoff.md");
+
+  if (!fs.existsSync(filePath)) {
+    err("handoff.md not found in current directory.");
+    process.exit(1);
+    return;
+  }
+
+  const content = fs.readFileSync(filePath, "utf8");
+  const requiredSections = [
+    "## Meta",
+    "## Project",
+    "## Current Task",
+    "## Progress",
+    "## Active Files",
+    "## Blocker",
+    "## Key Decisions",
+    "## Environment",
+    "## Next Steps",
+    "## For the Next AI"
+  ];
+
+  let missing = [];
+  requiredSections.forEach(section => {
+    if (!content.includes(section)) {
+      missing.push(section);
+    }
+  });
+
+  if (missing.length > 0) {
+    err("handoff.md is missing required sections:");
+    missing.forEach(m => console.log(`  ${c.red}•${c.reset} ${m}`));
+    process.exit(1);
+    return;
+  }
+
+  ok("handoff.md is valid!");
+}
+
 function writeFile(filePath, content, label) {
   const dir = path.dirname(filePath);
-  ensureDir(dir);
-  if (fs.existsSync(filePath)) {
-    inf(`${label} already exists — skipping (delete to reinstall)`);
+  if (!DRY_RUN) ensureDir(dir);
+
+  if (fs.existsSync(filePath) && !FORCE) {
+    inf(`${label} already exists — skipping (use --force to overwrite)`);
   } else {
-    fs.writeFileSync(filePath, content, "utf8");
-    ok(`Created ${path.relative(process.cwd(), filePath)}`);
+    if (DRY_RUN) {
+      ok(`[DRY RUN] Would create/overwrite ${path.relative(process.cwd(), filePath)}`);
+    } else {
+      fs.writeFileSync(filePath, content, "utf8");
+      ok(`${fs.existsSync(filePath) && FORCE ? "Overwrote" : "Created"} ${path.relative(process.cwd(), filePath)}`);
+    }
   }
 }
 
 function appendFile(filePath, content, marker, label) {
   if (fs.existsSync(filePath)) {
     const existing = fs.readFileSync(filePath, "utf8");
-    if (existing.includes(marker)) {
-      inf(`${label} already present in ${path.relative(process.cwd(), filePath)} — skipping`);
+    if (existing.includes(marker) && !FORCE) {
+      inf(`${label} already present in ${path.relative(process.cwd(), filePath)} — skipping (use --force to append anyway)`);
       return;
     }
-    fs.appendFileSync(filePath, "\n\n" + content, "utf8");
-    ok(`Appended ${label} to ${path.relative(process.cwd(), filePath)}`);
+    if (DRY_RUN) {
+      ok(`[DRY RUN] Would append ${label} to ${path.relative(process.cwd(), filePath)}`);
+    } else {
+      fs.appendFileSync(filePath, "\n\n" + content, "utf8");
+      ok(`Appended ${label} to ${path.relative(process.cwd(), filePath)}`);
+    }
   } else {
-    fs.writeFileSync(filePath, content, "utf8");
-    ok(`Created ${path.relative(process.cwd(), filePath)}`);
+    if (DRY_RUN) {
+      ok(`[DRY RUN] Would create ${path.relative(process.cwd(), filePath)}`);
+    } else {
+      writeFile(filePath, content, label);
+    }
   }
 }
 
@@ -188,6 +244,7 @@ Universal AI session handoff skill installer
 ${c.bold}Usage:${c.reset}
   npx context-handoff --tool <name>   Install for a specific tool
   npx context-handoff --all           Install for all supported tools
+  npx context-handoff --validate      Verify handoff.md follows schema
   npx context-handoff --list          List supported tools
   npx context-handoff --version       Show version
   npx context-handoff --help          Show this help
@@ -228,13 +285,22 @@ function main() {
 
   const cwd = process.cwd();
 
+  if (args.includes("--dry-run")) DRY_RUN = true;
+  if (args.includes("--force")) FORCE = true;
+
   console.log(`\n${c.bold}context-handoff${c.reset} v${VERSION}`);
+  if (DRY_RUN) console.log(`${c.yellow}${c.bold}[DRY RUN] No files will be modified${c.reset}`);
   console.log(`${c.gray}Installing to: ${cwd}${c.reset}`);
 
   if (args.includes("--all")) {
     Object.entries(TOOLS).forEach(([, fn]) => fn(cwd));
     console.log(`\n${c.bold}${c.green}All tools installed!${c.reset}`);
     console.log(`${c.gray}Use /handoff-export to export, /handoff-load to import.${c.reset}\n`);
+    return;
+  }
+
+  if (args.includes("--validate")) {
+    validateHandoff(cwd);
     return;
   }
 
@@ -258,4 +324,25 @@ function main() {
   console.log(`${c.gray}Run /handoff-export in ${toolName} when you want to hand off.${c.reset}\n`);
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  TOOLS,
+  validateHandoff,
+  writeFile,
+  appendFile,
+  installClaudeCode,
+  installGeminiCli,
+  installOpenCode,
+  installKiro,
+  installCodex,
+  installAider,
+  installCursor,
+  getConfig: () => ({ DRY_RUN, FORCE }),
+  setConfig: (config) => {
+    if (config.hasOwnProperty("DRY_RUN")) DRY_RUN = config.DRY_RUN;
+    if (config.hasOwnProperty("FORCE")) FORCE = config.FORCE;
+  }
+};
