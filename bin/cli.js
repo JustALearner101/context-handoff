@@ -87,10 +87,19 @@ function installClaudeCode(cwd) {
 
 function installGeminiCli(cwd) {
   hd("Installing for Gemini CLI");
-  const geminiMd = path.join(cwd, "GEMINI.md");
-  const snippet  = readTemplate("tools/gemini-cli/GEMINI_snippet.md");
-  appendFile(geminiMd, snippet, "context-handoff", "context-handoff snippet");
+  const dir = path.join(cwd, ".gemini", "commands");
+  writeFile(
+    path.join(dir, "handoff-export.toml"),
+    readTemplate("tools/gemini-cli/handoff-export.toml"),
+    "handoff-export command"
+  );
+  writeFile(
+    path.join(dir, "handoff-load.toml"),
+    readTemplate("tools/gemini-cli/handoff-load.toml"),
+    "handoff-load command"
+  );
   inf("Use with: /handoff-export  and  /handoff-load");
+  inf("Requires Gemini CLI v0.23.0+ for custom commands support");
 }
 
 function installOpenCode(cwd) {
@@ -110,16 +119,16 @@ function installOpenCode(cwd) {
 }
 
 function installKiro(cwd) {
-  hd("Installing for Kiro");
+  hd("Installing for Kiro CLI");
   const dir = path.join(cwd, ".kiro", "skills");
   writeFile(
-    path.join(dir, "handoff-export.yml"),
-    readTemplate("tools/kiro/handoff-export.yml"),
+    path.join(dir, "handoff-export", "SKILL.md"),
+    readTemplate("tools/kiro/handoff-export/SKILL.md"),
     "handoff-export skill"
   );
   writeFile(
-    path.join(dir, "handoff-load.yml"),
-    readTemplate("tools/kiro/handoff-load.yml"),
+    path.join(dir, "handoff-load", "SKILL.md"),
+    readTemplate("tools/kiro/handoff-load/SKILL.md"),
     "handoff-load skill"
   );
   inf("Use with: /handoff-export  and  /handoff-load");
