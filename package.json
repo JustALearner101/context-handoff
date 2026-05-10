@@ -1,0 +1,41 @@
+{
+  "name": "context-handoff",
+  "version": "1.0.0",
+  "description": "Universal AI session handoff skill — export context from one AI coding tool and resume in another",
+  "bin": {
+    "context-handoff": "./bin/cli.js"
+  },
+  "files": [
+    "bin/",
+    "templates/",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "claude-code",
+    "gemini-cli",
+    "opencode",
+    "kiro",
+    "codex",
+    "aider",
+    "ai",
+    "context",
+    "handoff",
+    "session",
+    "llm",
+    "developer-tools"
+  ],
+  "author": "your-github-username",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-github-username/context-handoff.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-github-username/context-handoff/issues"
+  },
+  "homepage": "https://github.com/your-github-username/context-handoff#readme"
+}

@@ -1,0 +1,47 @@
+name: handoff-export
+description: Export current session context to handoff.md for seamless handoff to another AI coding tool
+
+instructions: |
+  Generate a structured handoff document and save it as `handoff.md` in the project root.
+  Follow this schema EXACTLY:
+
+  # 🤝 Context Handoff
+
+  ## Meta
+  - exported_at: [current ISO 8601 timestamp]
+  - exported_from: kiro
+  - session_id: [short random ID]
+
+  ## Project
+  - name, stack, root, package_manager
+
+  ## Current Task
+  [One paragraph — specific, include feature/module/endpoint]
+
+  ## Progress
+  - [x] completed items
+  - [ ] pending items
+
+  ## Active Files
+  - path/to/file — one-line description
+
+  ## Blocker
+  [Exact error message or "None"]
+
+  ## Key Decisions
+  - architectural/technical decisions this session
+
+  ## Environment
+  [Runtime versions, required env vars, dev command, port]
+
+  ## Next Steps
+  1. Immediate next action
+
+  ## For the Next AI
+  - Read all Active Files before doing anything
+  - Do NOT change Key Decisions without flagging first
+  - [any other constraints]
+
+  After writing respond with:
+  ✅ handoff.md written. Switch tools and run /handoff-load to continue.
+  Summary — Task: [one line] | Next: [one line] | Blocker: [one line or None]
